@@ -296,7 +296,7 @@ python -m pytest -q                                  # 120 offline tests
 
 python scraper.py --seed-demo                        # synthetic demo, no network
 python dashboard.py                                  # local dashboard → http://127.0.0.1:8000
-python tools/build_fonts.py                          # optional: fetch the dashboard's web fonts
+python tools/build_fonts.py                          # optional: re-download the bundled web fonts
 ```
 
 With a site operator's permission and a human-made session:

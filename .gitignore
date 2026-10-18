@@ -24,13 +24,14 @@ _page_cache/
 scraper.log
 worker_tuning*.json
 
-# --- Generated indexes & fonts (rebuilt by the app / tools/build_fonts.py) ---
+# --- Generated indexes (rebuilt by the app from the local archive) ---
 rr_archive/web/static/label_fit.json
 rr_archive/web/static/notes_index.json
 rr_archive/web/static/lyrics_index.json
 rr_archive/web/static/lyrics_meta.json
-rr_archive/web/static/fonts/
-# byproduct of build_fonts.py; the same data is already inlined in static_catalog.html
+# The dashboard's fonts in static/fonts/ ARE committed (SIL OFL, ~0.8 MB) so a fresh
+# clone works offline. This one is a byproduct of build_fonts.py; the same data is
+# already inlined in static_catalog.html.
 rr_archive/web/static/fonts_embedded.css
 rr_archive/web/static/_backup_before_ussr/
 

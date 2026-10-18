@@ -2,7 +2,7 @@
 
 ## Fonts
 
-`rr_archive/web/static/static_catalog.html` inlines subsets of the fonts below as base64 `data:` URIs, so the exported catalogue renders correctly from `file://`. `tools/build_fonts.py` fetches the same files for the dashboard. Each font is used unmodified under the **SIL Open Font License, Version 1.1** (full text: <https://openfontlicense.org/open-font-license-official-text/>).
+`rr_archive/web/static/fonts/` contains unmodified `.woff2` subsets of the fonts below, used by the local dashboard. `rr_archive/web/static/static_catalog.html` inlines the same files as base64 `data:` URIs, so the exported catalogue renders correctly from `file://`. `tools/build_fonts.py` re-downloads them. Each font is distributed under the **SIL Open Font License, Version 1.1** (full text: <https://openfontlicense.org/open-font-license-official-text/>).
 
 | Font | Copyright | Source |
 |---|---|---|
