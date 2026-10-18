@@ -4,8 +4,11 @@ archive explorer with re-classification, static catalog export."""
 from __future__ import annotations
 
 import json
+import os
 import re
 import sqlite3
+import subprocess
+import sys
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -296,23 +299,28 @@ def create_app(db_path: Path = config.DB_PATH, archive_root: Path = config.ARCHI
                 "playlists_embedded": len(saved["playlists"]) if saved else 0,
                 "liked_embedded": len(saved["liked"]) if saved else 0}
 
+    gift_job = {"proc": None}
+
     @app.post("/api/build-gift")
     def build_gift_now():
         """Sync new COMPLETED tracks into ~/Desktop/patefon_gift as a detached,
         incremental subprocess (4 workers, leaving the crawler its cores). It
         reads the archive read-only, so it is safe to run during a crawl."""
-        import subprocess
-        import sys as _sys
         from ..gift_builder import DEST_ROOT
-        args = [_sys.executable, "-u", str(config.PROJECT_ROOT / "scraper.py"),
+        running = gift_job["proc"]
+        if running is not None and running.poll() is None:
+            raise HTTPException(409, "a gift update is already running")
+        args = [sys.executable, "-u", str(config.PROJECT_ROOT / "scraper.py"),
                 "--build-gift", "--gift-workers", "4"]
         env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
         flags = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
-        log = (config.CONTROL_DIR); log.mkdir(exist_ok=True)
-        out = open(log / "gift_build.log", "ab")
-        subprocess.Popen(args, cwd=config.PROJECT_ROOT, env=env, stdout=out, stderr=subprocess.STDOUT,
-                         stdin=subprocess.DEVNULL, creationflags=flags)
-        return {"started": True, "dest": str(DEST_ROOT), "log": str(log / "gift_build.log")}
+        config.CONTROL_DIR.mkdir(parents=True, exist_ok=True)
+        log = config.CONTROL_DIR / "gift_build.log"
+        with open(log, "ab") as out:          # the child keeps its own copy of the handle
+            gift_job["proc"] = subprocess.Popen(args, cwd=config.PROJECT_ROOT, env=env, stdout=out,
+                                                stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                                                creationflags=flags)
+        return {"started": True, "dest": str(DEST_ROOT), "log": str(log)}
 
     # -- media ---------------------------------------------------------------------
     def _safe(path_str: str | None) -> Path:

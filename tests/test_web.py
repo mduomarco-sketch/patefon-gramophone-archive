@@ -180,3 +180,22 @@ def test_progress_exposes_speedometer_totals(client):
         assert k in p and isinstance(p[k], int)
     assert p["completed_total"] == p["items"].get("COMPLETED", 0)
     assert p["bytes_total"] >= 0
+
+
+def test_build_gift_endpoint_starts_one_background_update(client, monkeypatch):
+    import rr_archive.web.app as app_mod
+    calls = []
+
+    class FakePopen:                      # never launch a real build from the test suite
+        def __init__(self, args, **kwargs):
+            calls.append(args)
+
+        def poll(self):
+            return None                   # still running
+
+    monkeypatch.setattr(app_mod.subprocess, "Popen", FakePopen)
+    r = client.post("/api/build-gift", headers=H)
+    assert r.status_code == 200 and r.json()["started"] is True
+    assert "--build-gift" in calls[0] and calls[0][-2:] == ["--gift-workers", "4"]
+    again = client.post("/api/build-gift", headers=H)   # double click: no second build
+    assert again.status_code == 409 and len(calls) == 1
