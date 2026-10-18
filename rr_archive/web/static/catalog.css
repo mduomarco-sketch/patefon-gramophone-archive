@@ -522,7 +522,7 @@ button { cursor: pointer; }
   .pf-vol .pf-range { width: 72px; }
   .pf-table .c-cat { display: none; }
 }
-@media (max-width: 860px) {
+@media (max-width: 767.98px) {
   :root { --player-h: 148px; }
   .pf-app { grid-template-columns: minmax(0, 1fr); }
   .pf-side {
@@ -544,7 +544,6 @@ button { cursor: pointer; }
   }
   .pf-np { grid-column: 1; grid-row: 1; }
   .pf-right { grid-column: 2; grid-row: 1; }
-  .pf-right .pf-vol, .pf-right .pf-speed { display: none; }
   .pf-center { grid-column: 1 / -1; grid-row: 2; }
   .pf-np-disc { width: 48px; height: 48px; }
   .pf-table .c-lang, .pf-table .c-year { display: none; }
@@ -679,7 +678,7 @@ button { cursor: pointer; }
 }
 .pf-silent p { margin: 0 auto; max-width: 38ch; font: italic 500 19px/1.5 var(--font-display); color: var(--text-2); }
 
-@media (max-width: 860px) {
+@media (max-width: 767.98px) {
   .pf-ded { padding: 26px 22px 24px; }
   .pf-ded-body p { font-size: 17px; }
   .pf-ded-btn { display: none; }
@@ -864,3 +863,250 @@ button { cursor: pointer; }
   background-repeat: repeat-x; background-size: 60px 30px;
 }
 .pf-hero-kz .pf-stamp { border-color: var(--brass); color: var(--brass); box-shadow: inset 0 0 0 1px rgba(229, 184, 76, 0.35); }
+
+/* =====================================================================================
+   Hardware & layout layer: the icon rail, the hardware tray and phone layouts, plus
+   valve-radio details - the 6Е5С magic eye, the tuning-scale dial, bakelite keys,
+   the brass tonearm and an engraved nameplate.
+   ===================================================================================== */
+
+/* --- icon rail (68px) ------------------------------------------------------------------ */
+.pf-app { transition: grid-template-columns 220ms cubic-bezier(0.22, 1, 0.36, 1); }
+.pf-app.rail { --sidebar-w: 68px; }
+.pf-side { overflow-x: hidden; }
+.pf-brand-text { flex: 1; min-width: 0; }
+.pf-rail-btn {
+  flex: none; width: 26px; height: 26px; border: 0; border-radius: 50%; display: inline-grid; place-items: center;
+  font: 700 14px/1 var(--font-poster); color: #2A1B08; cursor: pointer; align-self: center;
+  background: radial-gradient(circle at 35% 30%, #FBE7A6, #E5B84C 45%, #8A621E);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  transition: transform 90ms ease, filter 120ms ease;
+}
+.pf-rail-btn:hover { filter: brightness(1.1); }
+.pf-rail-btn:active { transform: translateY(1px); }
+.pf-nav-item { position: relative; }
+.pf-nav-item .count-mini { display: none; }
+.pf-app.rail .pf-side { padding: 18px 8px 14px; gap: 14px; }
+.pf-app.rail .pf-brand { flex-direction: column; gap: 10px; padding: 0; }
+.pf-app.rail .pf-brand-text, .pf-app.rail .pf-nav-title, .pf-app.rail .pf-plate,
+.pf-app.rail .pf-nav-item .label, .pf-app.rail .pf-nav-item .count { display: none; }
+.pf-app.rail .pf-nav-group + .pf-nav-group { border-top: 1px solid rgba(229, 184, 76, 0.16); padding-top: 12px; }
+.pf-app.rail .pf-nav-item { justify-content: center; padding: 10px 0; gap: 0; }
+.pf-app.rail .pf-nav-item .ico { width: auto; font-size: 17px; }
+.pf-app.rail .pf-nav-item .ico svg { width: 20px; height: 20px; }
+.pf-app.rail .pf-nav-item .pl-cover { width: 30px; height: 30px; }
+.pf-app.rail .pf-nav-item .count-mini {
+  display: block; position: absolute; top: 2px; right: 3px; padding: 0 4px; border-radius: 6px; pointer-events: none;
+  font: 600 9px/1.3 var(--font-poster); letter-spacing: 0.02em; color: #FFE3A3; background: rgba(204, 41, 41, 0.92);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+.pf-app.rail .pf-nav-item .count-mini:empty { display: none; }
+.pf-rail-tip {   /* floats outside the sidebar, so it is never clipped by its scroll box */
+  position: fixed; z-index: 95; pointer-events: none; opacity: 0; transform: translate(-4px, -50%);
+  max-width: 280px; padding: 6px 10px; border-radius: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font: 600 12px/1.2 var(--font-ui); color: #F5E7C8; background: linear-gradient(180deg, #2E2522, #1A1412);
+  border: 1px solid rgba(229, 184, 76, 0.45); box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+.pf-rail-tip.show { opacity: 1; transform: translate(0, -50%); }
+
+/* --- engraved brass nameplate ------------------------------------------------------------- */
+.pf-plate {
+  display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 4px 0; padding: 6px 8px;
+  border-radius: 3px; background: linear-gradient(180deg, #E9C66E, #B8892E 55%, #8C6420);
+  box-shadow: inset 0 1px 0 rgba(255, 245, 210, 0.6), inset 0 -1px 0 rgba(60, 40, 8, 0.6), 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+.pf-plate-text {
+  font: 700 9px/1 var(--font-poster); letter-spacing: 0.17em; color: #4A3108; white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(255, 236, 180, 0.55);   /* engraved: dark cut, light lower lip */
+}
+.pf-screw {
+  position: relative; width: 7px; height: 7px; flex: none; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #F7E2A0, #8C6420 70%); box-shadow: inset 0 0 0 1px rgba(60, 40, 8, 0.55);
+}
+.pf-screw::after { content: ""; position: absolute; left: 1px; right: 1px; top: 3px; height: 1px; background: rgba(60, 40, 8, 0.75); transform: rotate(-35deg); }
+
+/* --- long titles: ellipsis, uniform card heights --------------------------------------------- */
+.pf-card-title, .pf-hero h1, .pf-story-title { overflow-wrap: anywhere; }
+.pf-np-text { overflow: hidden; }
+
+/* --- locate the playing record ------------------------------------------------------------- */
+.pf-locate { font-size: 15px; }
+.pf-card.pf-located { animation: pf-locate 2.4s ease-out; }
+tr.row.pf-located > td { animation: pf-locate-row 2.4s ease-out; }
+@keyframes pf-locate {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(229, 184, 76, 0); }
+  12%, 58% { box-shadow: 0 0 0 3px rgba(229, 184, 76, 0.95), 0 0 26px 4px rgba(229, 184, 76, 0.45); }
+  35% { box-shadow: 0 0 0 2px rgba(229, 184, 76, 0.55), 0 0 14px 2px rgba(229, 184, 76, 0.2); }
+}
+@keyframes pf-locate-row { 0%, 100% { background: transparent; } 15%, 58% { background: rgba(229, 184, 76, 0.22); } 35% { background: rgba(229, 184, 76, 0.08); } }
+
+/* --- player fascia: speaker-grille cloth at the ends ------------------------------------------ */
+:root { --player-h: 104px; }
+.pf-player { position: relative; isolation: isolate; grid-template-columns: minmax(220px, 1fr) minmax(320px, 1.5fr) auto; }
+.pf-player::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0.6;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.6) 0 0.9px, transparent 1.3px) 0 0 / 5px 5px;
+  -webkit-mask: linear-gradient(90deg, #000, transparent 18%, transparent 82%, #000);
+          mask: linear-gradient(90deg, #000, transparent 18%, transparent 82%, #000);
+}
+
+/* --- hardware tray: inline when there is room, a pop-up panel at 1040px and below -------------- */
+.pf-tray { display: contents; }
+.pf-right .pf-tray-btn, .pf-tray .pf-tray-only { display: none; }
+@media (max-width: 1040px) {
+  .pf-right .pf-tray-btn { display: inline-grid; }
+  .pf-tray {
+    display: none; position: absolute; right: 12px; bottom: calc(100% + 10px); z-index: 40;
+    flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; max-width: min(400px, calc(100vw - 24px));
+    padding: 12px 14px; border-radius: 12px;
+    background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 3px), linear-gradient(180deg, #3A3533, #1F1A19);
+    border: 1px solid rgba(229, 184, 76, 0.45); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  .pf-tray.open { display: flex; }
+  .pf-tray .pf-vol .pf-range { width: 120px; }
+}
+
+/* --- bakelite keys in a recessed brass frame ------------------------------------------------- */
+.pf-speed, .pf-seg {
+  display: inline-flex; gap: 3px; padding: 3px; border-radius: 7px;
+  background: linear-gradient(180deg, #0E0B0A, #1C1614); border: 1px solid rgba(229, 184, 76, 0.5);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.75), 0 1px 0 rgba(255, 236, 190, 0.12);
+}
+.pf-speed button, .pf-seg button {
+  position: relative; border-radius: 4px; color: #E9DFCB; font: 600 11px var(--font-mono); padding: 5px 9px 6px;
+  background: linear-gradient(180deg, #4A3A33, #2A1F1A 60%, #1B1310); border: 1px solid #0B0807;
+  box-shadow: inset 0 1px 0 rgba(255, 236, 200, 0.18), 0 2px 0 #090605, 0 3px 4px rgba(0, 0, 0, 0.4);
+  transition: transform 80ms ease, box-shadow 80ms ease, color 120ms ease;
+}
+.pf-speed button:hover, .pf-seg button:hover { color: #FFF4DE; }
+.pf-speed button:active, .pf-seg button:active { transform: translateY(1px); box-shadow: inset 0 1px 0 rgba(255, 236, 200, 0.1), 0 1px 0 #090605; }
+.pf-speed button[aria-pressed="true"], .pf-seg button[aria-pressed="true"] {
+  color: var(--brass); background: linear-gradient(180deg, #3A2C25, #1E1612);
+  transform: translateY(1px); box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.6), 0 1px 0 #090605;
+}
+.pf-speed button[aria-pressed="true"]::before, .pf-seg button[aria-pressed="true"]::before,
+.pf-transport .pf-icon-btn[aria-pressed="true"]::before, .pf-tray .pf-icon-btn[aria-pressed="true"]::before {   /* amber lamp */
+  content: ""; position: absolute; top: 3px; right: 3px; width: 4px; height: 4px; border-radius: 50%;
+  background: #FFB347; box-shadow: 0 0 4px 1px rgba(255, 170, 60, 0.85);
+}
+.pf-transport .pf-icon-btn, .pf-tray .pf-icon-btn { position: relative; }
+.pf-tray .pf-icon-btn {   /* same valve-radio push-buttons as the transport */
+  width: 34px; height: 32px; border-radius: 4px; color: #E9DFCB;
+  background: linear-gradient(180deg, #4A4340, #2B2624); border: 1px solid #120F0E;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 2px 0 #0B0909, 0 3px 6px rgba(0, 0, 0, 0.45);
+}
+.pf-tray .pf-icon-btn:active { transform: translateY(1px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 1px 0 #0B0909; }
+
+/* --- 6Е5С magic eye: double brushed-brass bezel, glass, cathode cap, amber phosphor ---------- */
+.pf-eye {
+  --eye: 0; width: 38px; height: 38px; margin: 0 10px 0 6px;
+  background: radial-gradient(circle, #1B0E05 0 56%, #0B0604 57%);
+  box-shadow: 0 0 0 2px #120D0B, 0 0 0 4.5px #C79A3E, 0 0 0 5.5px #5B4115, 0 0 0 7px #EBC56C, 0 0 0 8px #4A3410,
+              0 3px 10px 7px rgba(0, 0, 0, 0.45);
+}
+.pf-eye.on {
+  box-shadow: 0 0 0 2px #120D0B, 0 0 0 4.5px #C79A3E, 0 0 0 5.5px #5B4115, 0 0 0 7px #EBC56C, 0 0 0 8px #4A3410,
+              0 3px 10px 7px rgba(0, 0, 0, 0.45), 0 0 calc(8px + var(--eye) * 14px) calc(7px + var(--eye) * 3px) rgba(255, 140, 30, calc(0.08 + var(--eye) * 0.3));
+}
+.pf-eye::before {   /* brushed grain across the bezel rings */
+  content: ""; position: absolute; inset: -8px; border-radius: 50%; pointer-events: none;
+  background: repeating-conic-gradient(rgba(255, 244, 210, 0.16) 0deg 1.5deg, rgba(40, 26, 6, 0.16) 1.5deg 3deg);
+  -webkit-mask: radial-gradient(circle closest-side, transparent 70%, #000 71% 99%, transparent 100%);
+          mask: radial-gradient(circle closest-side, transparent 70%, #000 71% 99%, transparent 100%);
+}
+.pf-eye-glass {
+  inset: 4px; box-shadow: none; filter: blur(0.35px) saturate(1.25);
+  background: conic-gradient(from 0deg,
+    rgba(255, 168, 52, calc(0.35 + var(--eye) * 0.65)) 0deg calc(40deg + var(--eye) * 138deg),
+    rgba(40, 16, 4, 0.92) calc(40deg + var(--eye) * 138deg) calc(320deg - var(--eye) * 138deg),
+    rgba(255, 168, 52, calc(0.35 + var(--eye) * 0.65)) calc(320deg - var(--eye) * 138deg) 360deg);
+  -webkit-mask: radial-gradient(circle, transparent 0 27%, #000 31% 93%, transparent 97%);
+          mask: radial-gradient(circle, transparent 0 27%, #000 31% 93%, transparent 97%);
+}
+.pf-eye:not(.on) .pf-eye-glass { animation: pf-ember 3.8s ease-in-out infinite; }   /* standby ember */
+.pf-eye.on .pf-eye-glass { opacity: 1; animation: none; }
+@keyframes pf-ember { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.52; } }
+.pf-eye-cap {
+  inset: 33%; background: radial-gradient(circle at 38% 32%, #4A4441, #15110F 60%, #050403);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+}
+.pf-eye-shine {   /* curved glass reflection */
+  position: absolute; inset: 2px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(ellipse 58% 36% at 36% 22%, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 62%),
+              radial-gradient(circle at 72% 84%, rgba(255, 255, 255, 0.07), transparent 38%);
+}
+
+/* --- the seek bar as a backlit amber glass tuning scale ------------------------------------- */
+.pf-wave {
+  --glow: 0; height: 30px; border-radius: 6px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 38%),
+    radial-gradient(120% 140% at 50% 125%, rgba(255, 150, 40, calc(0.32 + var(--glow) * 0.3)), transparent 70%),
+    linear-gradient(180deg, #F6D58E, #E7AE53 55%, #C9852E);
+  box-shadow: inset 0 0 0 1px rgba(60, 30, 6, 0.55), inset 0 2px 6px rgba(255, 240, 200, 0.35), inset 0 -6px 12px rgba(120, 52, 6, 0.45),
+              0 0 0 2px #1A1411, 0 0 0 3.5px rgba(229, 184, 76, 0.6),
+              0 0 calc(8px + var(--glow) * 14px) rgba(255, 150, 40, calc(0.12 + var(--glow) * 0.35));
+}
+.pf-wave canvas { border-radius: 6px; }
+.pf-wave:focus-visible { outline: 2px solid var(--brass); outline-offset: 5px; }
+.pf-wave-tip {   /* a floating glass pill with the hovered time */
+  bottom: calc(100% + 11px); font: 600 11px var(--font-mono); color: #2A1806; border-radius: 999px; padding: 3px 9px;
+  background: linear-gradient(180deg, rgba(255, 248, 226, 0.94), rgba(240, 214, 150, 0.9));
+  border: 1px solid rgba(120, 80, 20, 0.55); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* --- brass tonearm: rests on its post, swings onto the rim, tracks inward ---------------- */
+.pf-story-disc, .pf-np-disc { position: relative; overflow: visible; }
+.pf-story-disc { margin-top: 34px; }
+.pf-arm {
+  position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 2;
+  filter: drop-shadow(1.5px 3px 2.5px rgba(0, 0, 0, 0.55));
+}
+.pf-arm.mini { transform: scaleX(-1); filter: drop-shadow(-1px 1.5px 1.2px rgba(0, 0, 0, 0.5)); }   /* pivot on the left: never covers the title */
+.pf-arm .arm-tube, .pf-arm .arm-head { fill: url(#pf-brass); stroke: rgba(60, 38, 8, 0.65); stroke-width: 0.28; }
+.pf-arm .arm-shine { fill: none; stroke: rgba(255, 248, 220, 0.75); stroke-width: 0.35; stroke-linecap: round; }
+.pf-arm .arm-weight { fill: url(#pf-steel); stroke: rgba(20, 16, 12, 0.7); stroke-width: 0.3; }
+.pf-arm .arm-stylus { fill: #E8E2D6; stroke: #4A3410; stroke-width: 0.3; }
+.pf-arm .arm-collar, .pf-arm .arm-base-ring, .pf-arm .arm-post-cap { fill: url(#pf-brass-disc); stroke: rgba(60, 38, 8, 0.7); stroke-width: 0.3; }
+.pf-arm .arm-base, .pf-arm .arm-post { fill: #1C1513; stroke: rgba(229, 184, 76, 0.55); stroke-width: 0.6; }
+
+/* --- phones: sidebar sheet, two-row player, bottom-sheet drawers ----------------------------- */
+@media (max-width: 767.98px) {
+  :root { --player-h: 126px; }
+  .pf-player { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-rows: auto auto; gap: 7px 8px; padding: 9px 12px 10px; align-content: center; }
+  .pf-center { display: contents; }
+  .pf-scrub { grid-column: 1 / -1; grid-row: 1; max-width: none; }
+  .pf-np { grid-column: 1; grid-row: 2; gap: 10px; }
+  .pf-transport { grid-column: 2; grid-row: 2; gap: 4px; }
+  .pf-transport .pf-hide-sm { display: none; }
+  .pf-right { grid-column: 3; grid-row: 2; gap: 4px; }
+  .pf-tray .pf-tray-only { display: inline-grid; }
+  .pf-tray { right: 8px; }
+  .pf-np-disc { width: 46px; height: 46px; }
+  .pf-np-meta { display: none; }
+  .pf-np-title { font-size: 15px; }
+  .pf-play { width: 44px; height: 44px; margin: 0 2px; }
+  .pf-transport .pf-icon-btn { width: 34px; height: 32px; }
+  .pf-time { width: 34px; font-size: 10px; }
+  .pf-eye { width: 32px; height: 32px; margin: 0 8px 0 4px; }
+  .pf-drawer, .pf-drawer.wide {
+    top: auto; left: 0; right: 0; bottom: 0; width: 100%; height: 88dvh; max-height: 88dvh;
+    border-left: 0; border-top: 1px solid rgba(229, 184, 76, 0.45); border-radius: 18px 18px 0 0;
+    transform: translateY(104%);
+  }
+  .pf-drawer.open { transform: none; }
+  .pf-drawer::before {   /* grab handle */
+    content: ""; position: absolute; top: 7px; left: 50%; width: 44px; height: 4px; margin-left: -22px;
+    border-radius: 4px; background: rgba(229, 184, 76, 0.55);
+  }
+  .pf-drawer-head { padding-top: 20px; }
+  .pf-story-disc { width: min(300px, 70%); }
+}
+@media (max-width: 480px) {
+  .pf-eye { display: none; }
+  .pf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .pf-hero h1 { font-size: 30px; }
+  .pf-content { padding: 14px 10px 30px; }
+  .pf-np-artist { display: none; }
+}

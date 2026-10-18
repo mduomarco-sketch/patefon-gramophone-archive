@@ -90,3 +90,51 @@ def test_design_tokens_locked():
     for rule in (".pf-eye", ".pf-telegram", ".pf-stamp", ".pf-hero-kz", "--font-poster", "--font-type"):
         assert rule in css, rule
     assert "prefers-reduced-motion" in css and "pointer-events: none; z-index: 100; opacity: 0.035" in css
+
+
+def test_hardware_layer_is_wired_up():
+    """Icon rail, hardware tray, phone layouts, locate, dial, tonearm, magic eye."""
+    js = (STATIC / "catalog.js").read_text(encoding="utf-8")
+    css = (STATIC / "catalog.css").read_text(encoding="utf-8")
+    for s in ("function toggleRail", 'e.key === "["', 'store.set("rail"', "(max-width: 1149.98px)", "(max-width: 767.98px)",
+              "function locateCurrent", 'k === "l"', "pf-located", "function tonearm", "function updateArms",
+              "function dialStep", "getByteTimeDomainData", "function toggleTray", "pf-tray-only", "pf-rail-tip",
+              "ПАТЕФОН · ГОСТ 5289-56"):
+        assert s in js, s
+    # Web Audio would silence file:// playback (CORS), so it must stay http(s)-only
+    assert "!/^https?:$/.test(location.protocol)) return;" in js
+    for key in ("railCollapse", "railExpand", "locate", "nothingPlaying", "tray"):
+        assert js.count(f'{key}: "') == 3, key                  # EN, RU and KZ dictionary entries
+    for s in (".pf-app.rail { --sidebar-w: 68px; }", "cubic-bezier(0.22, 1, 0.36, 1)", "@media (max-width: 1040px)",
+              "@media (max-width: 767.98px)", "@media (max-width: 480px)", ".pf-drawer.open { transform: none; }",
+              ".pf-arm", ".pf-eye-shine", "pf-ember", ".pf-plate", "@keyframes pf-locate", "translateY(1px)"):
+        assert s in css, s
+    assert css.count("{") == css.count("}")
+
+
+def test_tonearm_geometry_tracks_the_groove():
+    """The JS solves the pivot-centre-stylus triangle; check the same maths lands
+    the stylus on the lead-in groove, moves it steadily inward to the run-out
+    groove, and parks it off the record."""
+    import math
+    js = (STATIC / "catalog.js").read_text(encoding="utf-8")
+    m = re.search(r"const ARM = \{ px: ([\d.]+), py: ([\d.]+), len: ([\d.]+), rest: ([\d.]+), rIn: ([\d.]+), rOut: ([\d.]+) \}", js)
+    px, py, length, rest, r_in, r_out = map(float, m.groups())
+    d, base = math.hypot(50 - px, 50 - py), math.atan2(50 - py, 50 - px)
+
+    def angle(p):                                             # mirrors armAngle() in catalog.js
+        r = r_in + (r_out - r_in) * p
+        return math.degrees(base - math.acos((length ** 2 + d ** 2 - r ** 2) / (2 * length * d)))
+
+    def stylus(theta):
+        t = math.radians(theta)
+        return px + length * math.cos(t), py + length * math.sin(t)
+
+    angles = [angle(i / 10) for i in range(11)]
+    for i, theta in enumerate(angles):
+        x, y = stylus(theta)
+        assert abs(math.hypot(x - 50, y - 50) - (r_in + (r_out - r_in) * i / 10)) < 1e-9
+    assert all(b > a for a, b in zip(angles, angles[1:]))   # steadily inward
+    assert r_in < 50 and r_out > 18                          # inside the rim, outside the label hole
+    x, y = stylus(rest)
+    assert math.hypot(x - 50, y - 50) > 55                   # the rest post is beside the record

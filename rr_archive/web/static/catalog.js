@@ -128,6 +128,8 @@
       label: "Label", collection: "Collection", format: "Format", size: "Record size", rpm: "Transfer speed",
       onLabel: "Printed on the label", notes: "Archive notes", source: "View on russian-records.com",
       openPdf: "Open PDF", readHere: "Read here", hidePdf: "Hide PDF", zoom: "Click to zoom",
+      railCollapse: "Collapse sidebar", railExpand: "Expand sidebar", locate: "Locate current track",
+      nothingPlaying: "Nothing is playing yet", tray: "More controls",
       emptyAll: "No playable records yet. They will appear here as the archive grows.",
       emptyLiked: "Tap the heart on any record to keep it here.", emptyRecent: "Records you play will appear here.",
       emptySearch: "Nothing matches that search.", emptyPlaylist: "This playlist is empty. Use + on any record to add it.",
@@ -173,6 +175,8 @@
       label: "Фирма", collection: "Коллекция", format: "Формат", size: "Размер пластинки", rpm: "Скорость оцифровки",
       onLabel: "Надпись на этикетке", notes: "Заметки архива", source: "Открыть на russian-records.com",
       openPdf: "Открыть PDF", readHere: "Читать здесь", hidePdf: "Скрыть PDF", zoom: "Нажмите, чтобы увеличить",
+      railCollapse: "Свернуть панель", railExpand: "Развернуть панель", locate: "Показать текущую запись",
+      nothingPlaying: "Пока ничего не играет", tray: "Дополнительно",
       emptyAll: "Пока нет записей для прослушивания. Они появятся здесь по мере пополнения архива.",
       emptyLiked: "Нажмите на сердечко у любой записи, чтобы сохранить её здесь.", emptyRecent: "Здесь появятся прослушанные записи.",
       emptySearch: "Ничего не найдено.", emptyPlaylist: "Плейлист пуст. Добавляйте записи кнопкой +.",
@@ -218,6 +222,8 @@
       label: "Лейбл", collection: "Жинақ", format: "Формат", size: "Пластинка өлшемі", rpm: "Цифрлау жылдамдығы",
       onLabel: "Жапсырмадағы жазу", notes: "Мұрағат жазбалары", source: "russian-records.com сайтында ашу",
       openPdf: "PDF ашу", readHere: "Осында оқу", hidePdf: "PDF жасыру", zoom: "Үлкейту үшін басыңыз",
+      railCollapse: "Панельді жию", railExpand: "Панельді ашу", locate: "Ағымдағы жазбаны көрсету",
+      nothingPlaying: "Әзірге ештеңе ойнап тұрған жоқ", tray: "Қосымша",
       emptyAll: "Тыңдауға дайын жазба әзірге жоқ. Мұрағат толыққан сайын олар осында пайда болады.",
       emptyLiked: "Кез келген жазбадағы жүрекшені басып, осында сақтаңыз.", emptyRecent: "Тыңдаған жазбаларыңыз осында көрінеді.",
       emptySearch: "Ештеңе табылмады.", emptyPlaylist: "Тізім бос. Жазбаларды + түймесімен қосыңыз.",
@@ -270,6 +276,7 @@
       liked: new Set(store.get("liked", [])), recent: store.get("recent", []), playlists: store.get("playlists", []),
       base: [], order: [], pos: -1, currentId: null, shuffle: store.get("shuffle", false),
       repeat: store.get("repeat", "off"), radio: false, speed: store.get("speed", 1),
+      rail: store.get("rail", false),   // sidebar collapsed to the icon rail (wide screens)
       volume: store.get("volume", 0.85), muted: false, storyTab: store.get("storyTab", "record"), rpm: store.get("spinRpm", 8),   // visual spin; 8 = calm default errors: 0, focusedId: null,
     };
     if (!I18N[S.ui]) S.ui = "en";
@@ -343,13 +350,87 @@
     const toastEl = el("div", { class: "pf-toast", role: "status", "aria-live": "polite" });
     const slot = el("div", { class: "pf-slot", id: "pf-header-slot" });
     const app = el("div", { class: "pf-app" }, side, main, player);
-    root.replaceChildren(app, scrim, story, queueDrawer, toastEl);
+    const railTip = el("div", { class: "pf-rail-tip", role: "tooltip" });
+    root.replaceChildren(app, scrim, story, queueDrawer, toastEl, railTip, brassDefs());
 
     let toastTimer = 0;
     function toast(msg) {
       toastEl.textContent = msg; toastEl.classList.add("show");
       clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2600);
     }
+
+    // SVG helpers (constant markup only, never data).
+    function svgEl(tag, attrs = {}) {
+      const n = document.createElementNS("http://www.w3.org/2000/svg", tag);
+      for (const k in attrs) n.setAttribute(k, attrs[k]);
+      return n;
+    }
+    function brassDefs() {   // one shared copy of the hardware gradients for every tonearm
+      const s = svgEl("svg", { width: "0", height: "0", "aria-hidden": "true", style: "position:absolute" });
+      const defs = svgEl("defs");
+      const grad = (tag, id, attrs, stops) => {
+        const g = svgEl(tag, { id, ...attrs });
+        stops.forEach(([o, c]) => g.append(svgEl("stop", { offset: o, "stop-color": c })));
+        return g;
+      };
+      defs.append(
+        grad("linearGradient", "pf-brass", { x1: "0", y1: "0", x2: "0", y2: "1" },
+          [["0", "#FBE7A6"], ["0.35", "#E5B84C"], ["0.72", "#A87A26"], ["1", "#5E3F10"]]),
+        grad("linearGradient", "pf-steel", { x1: "0", y1: "0", x2: "0", y2: "1" },
+          [["0", "#F2EEE6"], ["0.5", "#8E8A84"], ["1", "#34312E"]]),
+        grad("radialGradient", "pf-brass-disc", { cx: "0.38", cy: "0.32", r: "0.75" },
+          [["0", "#FFF1C2"], ["0.35", "#E5B84C"], ["0.8", "#8A621E"], ["1", "#4A3108"]]));
+      s.append(defs);
+      return s;
+    }
+
+    // --- sidebar rail: 68px of icons. Remembered on wide screens, automatic below
+    // 1150px; on phones the sidebar is a sheet that slides over the content.
+    const mqRail = window.matchMedia("(max-width: 1149.98px)");
+    const mqMobile = window.matchMedia("(max-width: 767.98px)");
+    let railPeek = false;   // expanded on a narrow screen for now; not remembered
+    const railBtn = el("button", { class: "pf-rail-btn", onclick: () => toggleRail() });
+    function railOn() { return !mqMobile.matches && (mqRail.matches ? !railPeek : S.rail); }
+    function applyRail() {
+      const on = railOn();
+      app.classList.toggle("rail", on);
+      railBtn.textContent = on ? "»" : "«";
+      const lab = on ? t("railExpand") : t("railCollapse");
+      railBtn.setAttribute("aria-label", lab); railBtn.title = `${lab}  ([)`;
+      railBtn.setAttribute("aria-expanded", String(!on));
+      hideRailTip();
+    }
+    function toggleRail() {
+      if (mqMobile.matches) { toggleSideSheet(); return; }
+      if (mqRail.matches) railPeek = !railPeek;
+      else { S.rail = !S.rail; store.set("rail", S.rail); }
+      applyRail();
+    }
+    function toggleSideSheet(force) {
+      const open = force ?? !side.classList.contains("open");
+      side.classList.toggle("open", open); scrim.classList.toggle("open", open);
+    }
+    const onBreakpoint = () => { railPeek = false; if (!mqMobile.matches) toggleSideSheet(false); applyRail(); };
+    [mqRail, mqMobile].forEach((m) => (m.addEventListener ? m.addEventListener("change", onBreakpoint) : m.addListener(onBreakpoint)));
+    function showRailTip(btn) {
+      if (!app.classList.contains("rail") || !btn.dataset.tip) return;
+      const r = btn.getBoundingClientRect();
+      railTip.textContent = btn.dataset.tip;
+      railTip.style.top = `${Math.round(r.top + r.height / 2)}px`;
+      railTip.style.left = `${Math.round(r.right + 12)}px`;
+      railTip.classList.add("show");
+    }
+    function hideRailTip() { railTip.classList.remove("show"); }
+    side.addEventListener("pointerover", (e) => { const b = e.target.closest(".pf-nav-item"); if (b) showRailTip(b); });
+    side.addEventListener("pointerout", (e) => {
+      const b = e.target.closest(".pf-nav-item");
+      if (b && !(e.relatedTarget && b.contains(e.relatedTarget))) hideRailTip();
+    });
+    side.addEventListener("focusin", (e) => { const b = e.target.closest(".pf-nav-item"); if (b) showRailTip(b); });
+    side.addEventListener("focusout", hideRailTip);
+    side.addEventListener("scroll", hideRailTip, { passive: true });
+    const compact = (n) => (typeof n !== "number" ? "" : n >= 10000 ? `${Math.round(n / 1000)}k`
+      : n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k` : String(n));
 
     // --- discs ----------------------------------------------------------------------
     // Label scans are hand-made photos, so the record's spindle hole is often
@@ -466,8 +547,56 @@
       if (Math.abs(vel) < 0.05 && target === 0) vel = 0;
       angle = (angle + vel * dt) % 360;
       for (const e of spinEls) e.style.transform = `rotate(${angle}deg)`;
+      updateArms(dt);
       drawWave(now);
       requestAnimationFrame(frame);
+    }
+
+    // --- tonearm (звукосниматель) ------------------------------------------------------------
+    // Drawn in the disc's own units: centre (50,50), radius 50. The pivot stands off
+    // the record's top-right; the stylus meets the lead-in groove at r=46 and the
+    // run-out groove at r=21. Its angle comes from the pivot-centre-stylus triangle,
+    // so the needle really follows the groove inward as the record plays.
+    const ARM = { px: 100, py: 8, len: 64, rest: 80, rIn: 46, rOut: 21 };
+    const ARM_D = Math.hypot(50 - ARM.px, 50 - ARM.py), ARM_BASE = Math.atan2(50 - ARM.py, 50 - ARM.px);
+    function armAngle(p) {
+      const r = ARM.rIn + (ARM.rOut - ARM.rIn) * Math.min(1, Math.max(0, p));
+      const cos = (ARM.len ** 2 + ARM_D ** 2 - r ** 2) / (2 * ARM.len * ARM_D);
+      return (ARM_BASE - Math.acos(Math.min(1, Math.max(-1, cos)))) * 180 / Math.PI;
+    }
+    let arms = [];
+    function tonearm(trackId, mini = false) {
+      const rad = ARM.rest * Math.PI / 180;
+      const postX = ARM.px + ARM.len * Math.cos(rad), postY = ARM.py + ARM.len * Math.sin(rad);
+      const s = svgEl("svg", { class: "pf-arm" + (mini ? " mini" : ""), viewBox: "0 0 100 100", "aria-hidden": "true" });
+      s.append(
+        svgEl("circle", { cx: postX, cy: postY, r: "4.2", class: "arm-post" }),
+        svgEl("circle", { cx: postX, cy: postY, r: "2.3", class: "arm-post-cap" }),
+        svgEl("circle", { cx: ARM.px, cy: ARM.py, r: "9.5", class: "arm-base" }),
+        svgEl("circle", { cx: ARM.px, cy: ARM.py, r: "6.4", class: "arm-base-ring" }));
+      const g = svgEl("g", { class: "arm-swing", transform: `translate(${ARM.px} ${ARM.py}) rotate(${ARM.rest})` });
+      g.append(
+        svgEl("rect", { x: "-20", y: "-5", width: "11", height: "10", rx: "2.4", class: "arm-weight" }),
+        svgEl("rect", { x: "-9.5", y: "-1.5", width: "8", height: "3", rx: "1", class: "arm-tube" }),
+        svgEl("path", { d: `M0 -1.7 L${ARM.len - 13} -1.15 L${ARM.len - 13} 1.15 L0 1.7 Z`, class: "arm-tube" }),
+        svgEl("path", { d: `M0 -0.55 L${ARM.len - 13} -0.35`, class: "arm-shine" }),
+        svgEl("rect", { x: String(ARM.len - 14.5), y: "-3.4", width: "13", height: "6.8", rx: "1.6", class: "arm-head" }),
+        svgEl("circle", { cx: String(ARM.len - 1.2), cy: "0", r: "1.25", class: "arm-stylus" }),
+        svgEl("circle", { cx: "0", cy: "0", r: "4.4", class: "arm-collar" }));
+      s.append(g);
+      arms.push({ s, g, track: trackId, a: ARM.rest });
+      return s;
+    }
+    function updateArms(dt) {
+      if (!arms.length) return;
+      arms = arms.filter((x) => x.s.isConnected);
+      const p = audio.duration ? audio.currentTime / audio.duration : 0;
+      for (const x of arms) {
+        const target = x.track && x.track === S.currentId && !audio.paused ? armAngle(p) : ARM.rest;
+        if (Math.abs(target - x.a) < 0.01) continue;
+        x.a = reduceMotion ? target : x.a + (target - x.a) * Math.min(1, dt * 3.2);
+        x.g.setAttribute("transform", `translate(${ARM.px} ${ARM.py}) rotate(${x.a.toFixed(2)})`);
+      }
     }
 
     // --- sidebar ------------------------------------------------------------------------
@@ -495,32 +624,41 @@
       return c;
     }
     function renderSide() {
+      hideRailTip();
       const markSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       markSvg.setAttribute("class", "pf-brand-mark"); markSvg.setAttribute("viewBox", "0 0 40 40"); markSvg.setAttribute("aria-hidden", "true");
       const kids = [el("div", { class: "pf-brand" }, markSvg,
-        el("div", {}, el("div", { class: "pf-brand-name" }, "Patefon"),
+        el("div", { class: "pf-brand-text" }, el("div", { class: "pf-brand-name" }, "Patefon"),
           el("div", { class: "pf-brand-cyr" }, "АРХИВ ГРАМЗАПИСИ"),
-          el("div", { class: "pf-brand-sub" }, t("brandSub"))))];
+          el("div", { class: "pf-brand-sub" }, t("brandSub"))), railBtn)];
       for (const [group, entries] of NAV) {
         kids.push(el("div", { class: "pf-nav-group" }, el("div", { class: "pf-nav-title" }, t(group)),
-          entries.map(([v, glyph]) => el("button", {
-            class: "pf-nav-item", "aria-current": S.view === v ? "page" : null,
-            onclick: () => (v === "radio" ? startRadio() : go(v)),
-          }, el("span", { class: "ico", "aria-hidden": "true" }, icon(glyph)), el("span", { class: "label" }, t(v)),
-            el("span", { class: "count pf-stamp-n" }, "№ " + countFor(v))))));
+          entries.map(([v, glyph]) => {
+            const n = countFor(v);
+            return el("button", {
+              class: "pf-nav-item", "aria-current": S.view === v ? "page" : null, "data-tip": `${t(v)} · ${n}`,
+              onclick: () => (v === "radio" ? startRadio() : go(v)),
+            }, el("span", { class: "ico", "aria-hidden": "true" }, icon(glyph)), el("span", { class: "label" }, t(v)),
+              el("span", { class: "count pf-stamp-n" }, "№ " + n), el("span", { class: "count-mini", "aria-hidden": "true" }, compact(n)));
+          })));
       }
       kids.push(el("div", { class: "pf-nav-group" },
         el("div", { class: "pf-nav-title" }, t("playlists"),
           el("button", { class: "pf-icon-btn", title: t("newPlaylist"), "aria-label": t("newPlaylist"), onclick: () => newPlaylist() }, icon("plus"))),
         S.playlists.map((pl) => el("button", {
-          class: "pf-nav-item", "aria-current": S.view === "playlist" && S.arg === pl.id ? "page" : null, onclick: () => go("playlist", pl.id),
-        }, plCover(pl), el("span", { class: "label" }, pl.name), el("span", { class: "count" }, pl.tracks.length))),
-        el("button", { class: "pf-nav-item", onclick: () => newPlaylist() },
+          class: "pf-nav-item", "aria-current": S.view === "playlist" && S.arg === pl.id ? "page" : null,
+          "data-tip": `${pl.name} · ${pl.tracks.length}`, onclick: () => go("playlist", pl.id),
+        }, plCover(pl), el("span", { class: "label", title: pl.name }, pl.name), el("span", { class: "count" }, pl.tracks.length),
+          el("span", { class: "count-mini", "aria-hidden": "true" }, compact(pl.tracks.length)))),
+        el("button", { class: "pf-nav-item", "data-tip": t("newPlaylist"), onclick: () => newPlaylist() },
           el("span", { class: "ico", "aria-hidden": "true" }, "+"), el("span", { class: "label" }, t("newPlaylist")))));
       kids.push(el("div", { class: "pf-nav-group", style: "margin-top:auto" },
-        el("button", { class: "pf-nav-item", onclick: exportLibrary }, el("span", { class: "ico" }, "⇩"), el("span", { class: "label" }, t("backup"))),
-        el("button", { class: "pf-nav-item", onclick: importLibrary }, el("span", { class: "ico" }, "⇧"), el("span", { class: "label" }, t("restore")))));
+        el("button", { class: "pf-nav-item", "data-tip": t("backup"), onclick: exportLibrary }, el("span", { class: "ico" }, "⇩"), el("span", { class: "label" }, t("backup"))),
+        el("button", { class: "pf-nav-item", "data-tip": t("restore"), onclick: importLibrary }, el("span", { class: "ico" }, "⇧"), el("span", { class: "label" }, t("restore"))),
+        el("div", { class: "pf-plate", "aria-hidden": "true" },
+          el("span", { class: "pf-screw" }), el("span", { class: "pf-plate-text" }, "ПАТЕФОН · ГОСТ 5289-56"), el("span", { class: "pf-screw" }))));
       side.replaceChildren(...kids);
+      applyRail();
       // brand mark: a tiny record
       const mark = side.querySelector(".pf-brand-mark");
       mark.innerHTML = '<circle cx="20" cy="20" r="19" fill="#0F0E0E" stroke="rgba(229,184,76,.6)"/>'
@@ -538,7 +676,7 @@
       const seg = (opts, cur, onPick) => el("div", { class: "pf-seg", role: "group" },
         opts.map(([v, lab, title]) => el("button", { "aria-pressed": String(cur === v), title: title || lab, onclick: () => onPick(v) }, lab)));
       topbar.replaceChildren(
-        el("button", { class: "pf-icon-btn pf-menu-btn", "aria-label": "Menu", onclick: () => side.classList.toggle("open") }, icon("menu")),
+        el("button", { class: "pf-icon-btn pf-menu-btn", "aria-label": "Menu", onclick: () => toggleSideSheet() }, icon("menu")),
         el("label", { class: "pf-search" }, icon("search"), searchInput, el("span", { class: "pf-kbd", "aria-hidden": "true" }, "/")),
         el("div", { class: "spacer" }),
         seg([["grid", "▦", t("grid")], ["table", "☰", t("table")]], S.layout, (v) => { S.layout = v; store.set("layout", v); renderTopbar(); renderContent(); }),
@@ -558,9 +696,26 @@
     function go(view, arg = null) {
       S.view = view; S.arg = arg; S.shown = 120;
       store.set("view", view); store.set("viewArg", arg);
-      side.classList.remove("open");
+      toggleSideSheet(false);
       renderSide(); renderHero(); renderContent();
       main.scrollTo({ top: 0 });
+    }
+    // 🎯 Bring the record that is playing into view, wherever the library is.
+    function locateCurrent() {
+      toggleTray(false);
+      if (!S.currentId || !get(S.currentId)) { toast(t("nothingPlaying")); return; }
+      const visible = () => !["languages", "gallery"].includes(S.view) && viewList().some((i) => i.id === S.currentId);
+      if (!visible()) { S.q = ""; searchInput.value = ""; go("all"); }
+      const idx = viewList().findIndex((i) => i.id === S.currentId);
+      if (idx < 0) { toast(t("nothingPlaying")); return; }
+      if (idx >= S.shown) S.shown = Math.ceil((idx + 1) / 120) * 120;
+      toggleSideSheet(false);
+      renderContent();
+      const target = content.querySelector(".pf-card.is-current, tr.row.is-current");
+      if (!target) return;
+      target.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" });
+      target.classList.remove("pf-located"); void target.offsetWidth; target.classList.add("pf-located");
+      setTimeout(() => target.classList.remove("pf-located"), 2600);
     }
     function viewList() {
       let list;
@@ -691,7 +846,7 @@
             icon(cur && !audio.paused ? "pause" : "play"))),
         el("div", { class: "pf-card-tools" }, heartBtn(it), moreBtn(it)),
         el("h3", { class: "pf-card-title", title: it.title }, it.title || "-"),
-        el("div", { class: "pf-card-artist" }, it.artist || " "),
+        el("div", { class: "pf-card-artist", title: it.artist || "" }, it.artist || " "),
         el("div", { class: "pf-card-meta" }, langPill(it), it.year ? el("span", { class: "pf-year" }, it.year) : null));
     }
     function trackTable(list, ids) {
@@ -706,7 +861,7 @@
                 icon(cur && !audio.paused ? "pause" : "play"))),
             el("td", {}, el("div", { class: "pf-row-title" },
               el("button", { style: "border:0;background:none;padding:0", "aria-label": t("openStory"), onclick: () => openStory(it.id) }, disc(it)),
-              el("div", { class: "t" }, el("div", { class: "t-title", title: it.title }, it.title), el("div", { class: "t-artist" }, it.artist || "")))),
+              el("div", { class: "t" }, el("div", { class: "t-title", title: it.title }, it.title), el("div", { class: "t-artist", title: it.artist || "" }, it.artist || "")))),
             el("td", { class: "c-lang" }, langPill(it)),
             el("td", { class: "c-cat" }, el("div", { class: "pf-ell", title: it.category_path }, it.category)),
             el("td", { class: "c-year" }, el("span", { class: "pf-year" }, it.year || "-")),
@@ -744,32 +899,47 @@
     const npDiscBtn = el("button", { class: "pf-np-disc", "aria-label": t("openStory"), onclick: () => S.currentId && openStory(S.currentId) });
     const npTitle = el("div", { class: "pf-np-title" }), npArtist = el("div", { class: "pf-np-artist" });
     const npMeta = el("div", { class: "pf-np-meta" }), npHeartSlot = el("span");
-    const btnShuffle = el("button", { class: "pf-icon-btn", onclick: () => toggleShuffle() }, icon("shuffle"));
+    const btnShuffle = el("button", { class: "pf-icon-btn pf-hide-sm", onclick: () => toggleShuffle() }, icon("shuffle"));
     const btnPrev = el("button", { class: "pf-icon-btn", onclick: () => prev() }, icon("prev"));
     const btnPlay = el("button", { class: "pf-play", onclick: () => togglePlay() });
     const btnNext = el("button", { class: "pf-icon-btn", onclick: () => next(false) }, icon("next"));
-    const btnRepeat = el("button", { class: "pf-icon-btn", onclick: () => cycleRepeat() }, icon("repeat"));
-    const btnSurprise = el("button", { class: "pf-icon-btn pf-surprise", onclick: () => surprise() }, "🎲");
+    const btnRepeat = el("button", { class: "pf-icon-btn pf-hide-sm", onclick: () => cycleRepeat() }, icon("repeat"));
+    const btnSurprise = el("button", { class: "pf-icon-btn pf-surprise pf-hide-sm", onclick: () => surprise() }, "🎲");
     const tCur = el("span", { class: "pf-time" }, "0:00"), tDur = el("span", { class: "pf-time" }, "0:00");
     const waveCanvas = el("canvas");
     const waveTip = el("span", { class: "pf-wave-tip" });
     const wave = el("div", { class: "pf-wave", role: "slider", tabindex: "0", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": "0" }, waveCanvas, waveTip);
     const speedSeg = el("div", { class: "pf-speed", role: "group" });
-    const btnQueue = el("button", { class: "pf-icon-btn", onclick: () => toggleDrawer(queueDrawer, renderQueue) }, icon("queue"));
+    const btnQueue = el("button", { class: "pf-icon-btn", onclick: () => { toggleTray(false); toggleDrawer(queueDrawer, renderQueue); } }, icon("queue"));
+    const btnLocate = el("button", { class: "pf-icon-btn pf-locate", onclick: () => locateCurrent() }, "🎯");
     const magicEye = el("span", { class: "pf-eye", title: "6Е5С", role: "img", "aria-label": "Tuning indicator 6Е5С" },
-      el("span", { class: "pf-eye-glass" }), el("span", { class: "pf-eye-cap" }));
+      el("span", { class: "pf-eye-glass" }), el("span", { class: "pf-eye-cap" }), el("span", { class: "pf-eye-shine" }));
     const btnMute = el("button", { class: "pf-icon-btn", onclick: () => toggleMute() });
     const vol = el("input", { class: "pf-range", type: "range", min: "0", max: "1", step: "0.01", value: String(S.volume) });
     vol.addEventListener("input", () => {
       S.volume = Number(vol.value); audio.volume = S.volume; S.muted = S.volume === 0; audio.muted = S.muted;
       store.set("volume", S.volume); renderVolume();
     });
+    // Hardware tray: inline on wide screens; at 1040px and below it folds into a pop-up panel.
+    const btnShuffleT = el("button", { class: "pf-icon-btn pf-tray-only", onclick: () => toggleShuffle() }, icon("shuffle"));
+    const btnRepeatT = el("button", { class: "pf-icon-btn pf-tray-only", onclick: () => cycleRepeat() }, icon("repeat"));
+    const tray = el("div", { class: "pf-tray", id: "pf-tray" },
+      speedSeg, el("div", { class: "pf-vol" }, btnMute, vol), btnShuffleT, btnRepeatT, btnLocate, btnQueue);
+    const btnTray = el("button", { class: "pf-icon-btn pf-tray-btn", "aria-expanded": "false", "aria-controls": "pf-tray",
+      onclick: (e) => { e.stopPropagation(); toggleTray(); } }, icon("more"));
+    function toggleTray(force) {
+      const open = force ?? !tray.classList.contains("open");
+      tray.classList.toggle("open", open); btnTray.setAttribute("aria-expanded", String(open));
+    }
+    document.addEventListener("pointerdown", (e) => {
+      if (tray.classList.contains("open") && !tray.contains(e.target) && !btnTray.contains(e.target)) toggleTray(false);
+    });
     player.replaceChildren(
       el("div", { class: "pf-np" }, npDiscBtn, el("div", { class: "pf-np-text" }, npTitle, npArtist, npMeta), npHeartSlot),
       el("div", { class: "pf-center" },
         el("div", { class: "pf-transport" }, btnShuffle, btnPrev, btnPlay, btnNext, btnRepeat, btnSurprise),
         el("div", { class: "pf-scrub" }, tCur, wave, tDur)),
-      el("div", { class: "pf-right" }, magicEye, speedSeg, btnQueue, el("div", { class: "pf-vol" }, btnMute, vol)));
+      el("div", { class: "pf-right" }, magicEye, tray, btnTray));
 
     function renderPlayerLabels() {
       const set = (b, label, extra) => { b.setAttribute("aria-label", label); b.title = label + (extra ? `  (${extra})` : ""); };
@@ -779,6 +949,11 @@
       btnRepeat.setAttribute("aria-pressed", String(S.repeat !== "off"));
       btnRepeat.classList.toggle("pf-repeat-one", S.repeat === "one");
       set(btnSurprise, t("surprise")); set(btnQueue, t("queueTitle"));
+      set(btnLocate, t("locate"), "L"); set(btnTray, t("tray"));
+      set(btnShuffleT, t("shuffle")); btnShuffleT.setAttribute("aria-pressed", String(S.shuffle));
+      set(btnRepeatT, S.repeat === "one" ? t("repeatOne") : S.repeat === "all" ? t("repeatAll") : t("repeatOff"));
+      btnRepeatT.setAttribute("aria-pressed", String(S.repeat !== "off"));
+      btnRepeatT.classList.toggle("pf-repeat-one", S.repeat === "one");
       set(btnPlay, audio.paused ? t("play") : t("pause"), "Space");
       btnPlay.replaceChildren(icon(audio.paused ? "play" : "pause"));
       vol.setAttribute("aria-label", t("volume"));
@@ -799,9 +974,10 @@
     }
     function renderNowPlaying() {
       const it = S.currentId ? get(S.currentId) : null;
-      npDiscBtn.replaceChildren(disc(it, { eager: true }));
+      npDiscBtn.replaceChildren(disc(it, { eager: true }), tonearm(it ? it.id : null, true));
       npTitle.textContent = it ? it.title : t("choose");
       npArtist.textContent = it ? it.artist || "" : t("shortcuts");
+      npTitle.title = it ? it.title : ""; npArtist.title = it ? it.artist || "" : "";
       npMeta.replaceChildren(...(it ? [it.year ? el("span", { class: "pf-pill quiet mono" }, it.year) : null, langPill(it)] : []).filter(Boolean));
       npHeartSlot.replaceChildren(it ? heartBtn(it) : "");
       document.title = it ? `${it.title} · Patefon` : "Patefon";
@@ -823,33 +999,35 @@
         freq = new Uint8Array(analyser.frequencyBinCount);
       } catch { analyser = null; }
     }
-    let waveSeed = [], waveSeedFor = null;
-    function seedWave(id, n) {
-      if (waveSeedFor === id + ":" + n) return;
-      let h = hash(id || "none"); waveSeed = [];
-      for (let i = 0; i < n; i++) {
-        h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0;
-        const env = 0.55 + 0.45 * Math.sin((i / n) * Math.PI);
-        waveSeed.push(0.25 + 0.75 * env * ((h % 1000) / 1000));
-      }
-      waveSeedFor = id + ":" + n;
-    }
     let hoverX = null;
-    let eyeLevel = 0;
+    // 6Е5С magic eye: the shadow sector narrows with loudness. Over http(s) it reads
+    // the real signal (RMS of the waveform); on file:// - where Web Audio would
+    // silence the record - it follows a smooth musical envelope instead.
+    let eyeLevel = 0, timeData = null;
     function drawEye(now) {
       let target = 0;
       if (!audio.paused) {
-        if (analyser && freq) {
+        if (analyser) {
+          if (!timeData) timeData = new Uint8Array(analyser.fftSize);
+          analyser.getByteTimeDomainData(timeData);
           let sum = 0;
-          for (let i = 0; i < freq.length; i++) sum += freq[i];
-          target = Math.min(1, (sum / freq.length / 255) * 2.2);
-        } else {
-          target = 0.55 + 0.25 * Math.sin(now / 520) * Math.sin(now / 230);
-        }
+          for (let i = 0; i < timeData.length; i++) { const v = (timeData[i] - 128) / 128; sum += v * v; }
+          target = Math.min(1, Math.sqrt(sum / timeData.length) * 3.4);
+        } else if (!reduceMotion) {
+          const s = now / 1000;
+          target = 0.52 + 0.2 * Math.sin(s * 2.3) * Math.sin(s * 0.71 + 1.3) + 0.13 * Math.sin(s * 5.9 + 2 * Math.sin(s * 1.7));
+          target = Math.max(0.15, Math.min(0.92, target));
+        } else target = 0.55;
       }
-      eyeLevel += (target - eyeLevel) * 0.12;
+      eyeLevel += (target - eyeLevel) * (target > eyeLevel ? 0.32 : 0.07);   // fast attack, slow release
       magicEye.style.setProperty("--eye", eyeLevel.toFixed(3));
       magicEye.classList.toggle("on", !audio.paused);
+      wave.style.setProperty("--glow", eyeLevel.toFixed(3));   // the dial's backlight breathes with it
+    }
+    // Шкала настройки: the seek bar as a backlit glass tuning scale.
+    function dialStep(dur, w) {   // seconds between numerals, at least ~48px apart
+      for (const s of [10, 15, 20, 30, 60, 120, 300, 600]) if ((s / dur) * w >= 48) return s;
+      return 1200;
     }
     function drawWave(now) {
       drawEye(now);
@@ -861,29 +1039,30 @@
       }
       const g = waveCanvas.getContext("2d");
       g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
-      const bars = Math.max(24, Math.floor(w / 4.5));
-      seedWave(S.currentId, bars);
-      const pct = audio.duration ? audio.currentTime / audio.duration : 0;
-      const playing = !audio.paused;
-      if (analyser && playing) analyser.getByteFrequencyData(freq);
-      const bw = w / bars;
-      for (let i = 0; i < bars; i++) {
-        let amp = waveSeed[i];
-        if (playing) {
-          if (analyser) {
-            const bin = freq[Math.floor((i / bars) * freq.length * 0.7)] / 255;
-            amp = Math.max(0.12, amp * 0.45 + bin * 0.75);
-          } else if (!reduceMotion) {
-            amp *= 0.82 + 0.18 * Math.sin(now / 240 + i * 0.7) * Math.sin(now / 410 + i * 0.31);
-          }
-        }
-        const bh = Math.max(2, amp * (h - 4));
-        const x = i * bw;
-        const played = (i + 0.5) / bars <= pct;
-        const hovered = hoverX != null && x <= hoverX;
-        g.fillStyle = played ? "#D4A853" : hovered ? "rgba(212,168,83,0.42)" : "rgba(166,151,133,0.32)";
-        g.fillRect(x + 0.6, (h - bh) / 2, Math.max(1, bw - 1.6), bh);
+      const dur = audio.duration || 0;
+      const pct = dur ? Math.min(1, audio.currentTime / dur) : 0;
+      if (pct > 0) {   // the played stretch glows warmer, as if a lamp sat behind it
+        const warm = g.createLinearGradient(0, 0, 0, h);
+        warm.addColorStop(0, "rgba(255, 200, 110, 0.10)"); warm.addColorStop(1, "rgba(255, 140, 40, 0.30)");
+        g.fillStyle = warm; g.fillRect(0, 0, pct * w, h);
       }
+      for (let i = 0, x = 3; x < w - 2; i++, x += 5) {   // millimetre ticks rising from the lower edge
+        const tall = i % 10 === 0 ? 0.44 : i % 5 === 0 ? 0.3 : 0.17;
+        g.fillStyle = x / w <= pct ? "rgba(74, 28, 4, 0.9)" : "rgba(74, 36, 10, 0.55)";
+        g.fillRect(Math.round(x), Math.round(h - 3 - tall * h), 1, Math.round(tall * h));
+      }
+      g.fillStyle = "rgba(74, 36, 10, 0.5)"; g.fillRect(2, h - 3, w - 4, 1);   // the scale's base line
+      if (dur > 0) {   // printed numerals, like the station names on a valve radio
+        const step = dialStep(dur, w);
+        g.font = "600 9px 'PT Mono', ui-monospace, monospace"; g.textAlign = "center"; g.textBaseline = "top";
+        g.fillStyle = "rgba(64, 26, 6, 0.82)";
+        for (let s = step; s < dur - step * 0.35; s += step) g.fillText(fmtTime(s), (s / dur) * w, 3);
+      }
+      if (hoverX != null) { g.fillStyle = "rgba(255, 244, 214, 0.55)"; g.fillRect(Math.round(hoverX), 0, 1, h); }
+      const px = Math.max(1.5, Math.min(w - 1.5, pct * w));   // the pointer: red needle, gold glow
+      g.save(); g.shadowColor = "rgba(255, 168, 60, 0.95)"; g.shadowBlur = 7;
+      g.fillStyle = "#D2302A"; g.fillRect(px - 1, 0, 2.2, h); g.restore();
+      g.fillStyle = "rgba(255, 226, 160, 0.9)"; g.fillRect(px - 0.4, 0, 0.9, h);
     }
     function seekFromEvent(e) {
       const r = wave.getBoundingClientRect();
@@ -1360,7 +1539,7 @@
       story.replaceChildren(
         drawerHead(t("story")),
         el("div", { class: "pf-drawer-body" },
-          el("div", { class: "pf-story-disc", title: t("zoom"), onclick: () => lightbox(firstLabel) }, disc(d, { eager: true })),
+          el("div", { class: "pf-story-disc", title: t("zoom"), onclick: () => lightbox(firstLabel) }, disc(d, { eager: true }), tonearm(d.id)),
           el("div", { style: "display:flex;justify-content:center;margin:-8px 0 18px" }, rpmSeg),
           el("h3", { class: "pf-story-title" }, d.title),
           d.artist ? el("p", { class: "pf-story-artist" }, d.artist) : null,
@@ -1463,7 +1642,7 @@
 
     // --- keyboard ------------------------------------------------------------------------------
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") { closeAll(); return; }
+      if (e.key === "Escape") { toggleTray(false); closeAll(); return; }
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const tag = (e.target.tagName || "").toLowerCase();
       if (tag === "input" || tag === "textarea" || tag === "select" || e.target.isContentEditable) return;
@@ -1477,6 +1656,8 @@
       else if (k === "s") toggleShuffle();
       else if (k === "r") cycleRepeat();
       else if (k === "m") toggleMute();
+      else if (k === "l") locateCurrent();
+      else if (e.key === "[") { e.preventDefault(); toggleRail(); }
       else if (e.key === "/") { e.preventDefault(); searchInput.focus(); }
     });
 

@@ -220,7 +220,10 @@ Both use the same adapter contract (`items`, `detail`, `mediaUrl`, `labelUrl`, `
 
 * **The record.** The now-playing disc is the actual label scan, spinning on grooved shellac. Scans are rarely centred on the spindle hole, so `labelfit.py` finds the hole by **radial-symmetry voting** on the image and stores the offset, and the disc spins true. Spin speed follows the playback rate.
 * **The turntable.** Playback runs at **0.85×, 1.0× or 1.15×** with `preservesPitch = false`, so pitch moves with speed, as on a real deck. (Many 78s were recorded slightly off 78 RPM.)
-* **A magic-eye tube.** A Web Audio `AnalyserNode` drives the amber glow of a 6Е5С "magic eye" tuning tube, the level indicator of 1950s Soviet radios.
+* **A tonearm that really tracks.** A brushed-brass tonearm (*звукосниматель*) lifts off its rest post, swings onto the lead-in groove and moves inward as the record plays. Its angle is solved from the pivot–centre–stylus triangle, so the needle sits at the right groove radius at every moment (a test checks the geometry).
+* **A magic-eye tube.** A 6Е5С "magic eye", the tuning indicator of 1950s Soviet radios, sits in a double brass bezel. Its dark sector closes with loudness: over HTTP a Web Audio `AnalyserNode` measures the real signal (RMS). On `file://` a smooth envelope stands in, because routing a local file through Web Audio would silence it. When paused, it glows like a standby ember.
+* **A tuning-scale seek bar.** The progress bar is a backlit amber glass dial (*шкала настройки*) with millimetre ticks, printed time numerals and a glowing red needle at the playhead.
+* **Any screen size.** The sidebar collapses to a 68 px icon rail with floating tooltips (`[` to toggle, remembered, automatic below 1,150 px). On phones it becomes a slide-over sheet, drawers become bottom sheets, and speed, volume and the queue fold into a hardware tray. 🎯 (or `L`) scrolls back to the record that is playing.
 * **Soviet retro-futurism, typeset properly.** Oswald, PT Serif and PT Mono carry the poster, editorial and typewriter voices, in a palette of red velvet, carmine and brass. The fonts are subset and **inlined as data: URIs**, because browsers refuse to load font files from `file://` pages.
 * **Three languages.** The whole interface is localised in **English, Russian and Kazakh**. The Central Asian recordings have their own spotlight.
 * **Notes, not just tracks.** A *Lyrics & Notes* drawer shows the archive's own label transcription and liner notes, plus public-domain texts matched from Wikisource where one exists. Print items open in a PDF reader.
@@ -273,7 +276,7 @@ The local dashboard binds to **127.0.0.1 only**. It checks the Host header (agai
 
 ## 8. Testing
 
-**123 automated tests** (`python -m pytest -q`) run fully offline, against a fake HTTP transport and synthetic or saved pages. They cover:
+**125 automated tests** (`python -m pytest -q`) run fully offline, against a fake HTTP transport and synthetic or saved pages. They cover:
 
 * **Parsing:** the real-DOM parser, regression-tested on saved live pages.
 * **Classification:** the language cascade, including the pre-1918 orthography cases.
@@ -292,7 +295,7 @@ Fixtures redirect every index the app writes (fits, notes, lyrics, playlists) to
 ```bash
 python -m venv .venv
 .venv/Scripts/pip install -r requirements.txt        # macOS/Linux: .venv/bin/pip
-python -m pytest -q                                  # 123 offline tests
+python -m pytest -q                                  # 125 offline tests
 
 python scraper.py --seed-demo                        # synthetic demo, no network
 python dashboard.py                                  # local dashboard → http://127.0.0.1:8000
