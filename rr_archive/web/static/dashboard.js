@@ -145,7 +145,7 @@
   }));
   $("#btn-export").addEventListener("click", async () => {
     const lib = app.library();
-    $("#export-status").textContent = "Exporting…";
+    $("#export-status").textContent = "Exporting… (after a big crawl the first export measures new label scans and can take a few minutes; later ones take seconds)";
     try {
       const r = await post("/api/export", lib);
       if (r.seed_supported) {

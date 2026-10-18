@@ -27,6 +27,7 @@ worker_tuning*.json
 # --- Generated indexes (rebuilt by the app from the local archive) ---
 rr_archive/web/static/label_fit.json
 rr_archive/web/static/notes_index.json
+rr_archive/web/static/notes_index.meta.json
 rr_archive/web/static/lyrics_index.json
 rr_archive/web/static/lyrics_meta.json
 # The dashboard's fonts in static/fonts/ ARE committed (SIL OFL, ~0.8 MB) so a fresh

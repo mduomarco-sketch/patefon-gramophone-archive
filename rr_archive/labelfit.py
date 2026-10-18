@@ -72,6 +72,7 @@ def compute_fit(path: Path) -> list[float]:
     from PIL import Image
 
     with Image.open(path) as im:
+        im.draft("L", (THUMB * 2, THUMB * 2))   # JPEG: decode at 1/2-1/8 scale, several x faster
         im = im.convert("L")
         im.thumbnail((THUMB, THUMB))
         gray = np.asarray(im)
@@ -98,31 +99,46 @@ def load_fits(path: Path = FIT_PATH) -> dict:
         return {}
 
 
-def update_fits(conn, path: Path = FIT_PATH, limit: int | None = None) -> dict:
+def update_fits(conn, path: Path = FIT_PATH, limit: int | None = None, *,
+                workers: int | None = None, checkpoint: int = 250) -> dict:
     """Measure labels of COMPLETED audio items that have no fit yet.
-    Uses only reads on conn (safe with a read-only connection)."""
+    Uses only reads on conn (safe with a read-only connection).
+
+    Runs on a thread pool (Pillow decoding and the numpy voting release the
+    GIL) and saves every `checkpoint` measurements, so an interrupted export
+    keeps its progress instead of starting over."""
     fits = load_fits(path)
     rows = conn.execute(
         "SELECT item_id, label_local_paths FROM tracks WHERE status='COMPLETED' "
         "AND media_type IN ('MUSIC','RADIO_SPEECH') AND label_local_paths IS NOT NULL "
         "AND label_local_paths != '[]'").fetchall()
-    done = 0
-    for item_id, labels in rows:
-        if item_id in fits:
-            continue
+    todo = [(item_id, labels) for item_id, labels in rows if item_id not in fits]
+    if limit:
+        todo = todo[:limit]
+
+    def measure(row):
+        item_id, labels = row
         try:
-            first = Path(json.loads(labels)[0])
-            fits[item_id] = compute_fit(first)
+            return item_id, compute_fit(Path(json.loads(labels)[0]))
         except Exception:
-            fits[item_id] = [0.5, 0.5, 1.0]
-        done += 1
-        if limit and done >= limit:
-            break
-    if done:
+            return item_id, [0.5, 0.5, 1.0]
+
+    def save():
         path.parent.mkdir(parents=True, exist_ok=True)
         tmp = path.with_suffix(".json.part")
         tmp.write_text(json.dumps(fits, separators=(",", ":")), encoding="utf-8")
         os.replace(tmp, path)
+
+    done = 0
+    if todo:
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=workers or min(8, os.cpu_count() or 2)) as pool:
+            for item_id, fit in pool.map(measure, todo):    # results arrive in this thread
+                fits[item_id] = fit
+                done += 1
+                if done % checkpoint == 0:
+                    save()
+        save()
     return {"measured": done, "total": len(fits),
             "recentred": sum(1 for v in fits.values() if v != [0.5, 0.5, 1.0])}
 

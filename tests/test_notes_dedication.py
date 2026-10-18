@@ -81,3 +81,29 @@ def test_ui_has_dedication_tabs_crackle_in_all_languages():
     for s in (".pf-ded-wrap", ".pf-ded-seal", ".pf-tabs", ".pf-verse", ".pf-dropcap", ".disc .disc-dust", "--parchment"):
         assert s in css, s
     assert css.count("{") == css.count("}")
+
+
+def test_notes_index_is_incremental(tmp_path, make_client):
+    """Exports used to re-parse every cached page on every click (~12 min for
+    17k records). Only new or re-fetched pages may be parsed again."""
+    import os
+    from rr_archive.crawler import Crawler, cache_path
+    state = State(tmp_path / "s.db")
+    crawler = Crawler(make_client(), state, tmp_path / "archive", cache_dir=tmp_path / "cache",
+                      control_dir=tmp_path / "ctl")
+    crawler.seed()
+    crawler.run()
+    cache, idx = tmp_path / "cache", tmp_path / "notes_index.json"
+    first = notes_mod.build_index(state.conn, cache, idx)
+    assert first["parsed"] == first["records"] - first["no_cached_page"] and first["with_text"] >= 5
+    again = notes_mod.build_index(state.conn, cache, idx)
+    assert again["parsed"] == 0 and again["with_text"] == first["with_text"]
+    assert json.loads(idx.read_text(encoding="utf-8")) == notes_mod.load_index(idx)
+    url = state.conn.execute("SELECT source_url FROM tracks WHERE status='COMPLETED' LIMIT 1").fetchone()[0]
+    page = cache_path(cache, url)
+    st = page.stat()
+    os.utime(page, ns=(st.st_atime_ns, st.st_mtime_ns + 2_000_000_000))   # page re-fetched
+    third = notes_mod.build_index(state.conn, cache, idx)
+    assert third["parsed"] == 1 and third["with_text"] == first["with_text"]
+    assert notes_mod.build_index(state.conn, cache, idx, full=True)["parsed"] == first["parsed"]
+    state.close()

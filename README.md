@@ -273,7 +273,7 @@ The local dashboard binds to **127.0.0.1 only**. It checks the Host header (agai
 
 ## 8. Testing
 
-**120 automated tests** (`python -m pytest -q`) run fully offline, against a fake HTTP transport and synthetic or saved pages. They cover:
+**123 automated tests** (`python -m pytest -q`) run fully offline, against a fake HTTP transport and synthetic or saved pages. They cover:
 
 * **Parsing:** the real-DOM parser, regression-tested on saved live pages.
 * **Classification:** the language cascade, including the pre-1918 orthography cases.
@@ -292,7 +292,7 @@ Fixtures redirect every index the app writes (fits, notes, lyrics, playlists) to
 ```bash
 python -m venv .venv
 .venv/Scripts/pip install -r requirements.txt        # macOS/Linux: .venv/bin/pip
-python -m pytest -q                                  # 120 offline tests
+python -m pytest -q                                  # 123 offline tests
 
 python scraper.py --seed-demo                        # synthetic demo, no network
 python dashboard.py                                  # local dashboard → http://127.0.0.1:8000

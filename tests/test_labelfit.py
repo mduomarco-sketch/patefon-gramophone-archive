@@ -66,3 +66,32 @@ def test_update_is_incremental_and_export_embeds(built_archive, tmp_path, monkey
     data = json.loads(html.split('<script id="rr-data" type="application/json">', 1)[1].split("</script>", 1)[0])
     fitted = [i for i in data["items"] if i.get("fit")]
     assert fitted and all(abs(i["fit"][1] - 0.53) < 0.02 for i in fitted)
+
+
+def test_update_fits_keeps_progress_when_interrupted(built_archive, tmp_path, monkeypatch):
+    """Fits used to be saved only at the very end, so a cancelled export lost
+    every measurement and the next one started from zero."""
+    db, _ = built_archive
+    fit_file = tmp_path / "label_fit.json"
+    state = State(db)
+    n = len(state.conn.execute(
+        "SELECT 1 FROM tracks WHERE status='COMPLETED' AND media_type IN ('MUSIC','RADIO_SPEECH') "
+        "AND label_local_paths IS NOT NULL AND label_local_paths != '[]'").fetchall())
+    if n < 3:
+        pytest.skip("fixture has too few labelled records")
+    calls = []
+
+    def flaky(path):
+        calls.append(path)
+        if len(calls) == 3:
+            raise KeyboardInterrupt            # e.g. the export request is cancelled
+        return [0.5, 0.42, 1.0]
+
+    monkeypatch.setattr(lf, "compute_fit", flaky)
+    with pytest.raises(KeyboardInterrupt):
+        lf.update_fits(state.conn, fit_file, workers=1, checkpoint=1)
+    assert len(lf.load_fits(fit_file)) == 2              # the first two were saved
+    monkeypatch.setattr(lf, "compute_fit", lambda p: [0.5, 0.42, 1.0])
+    resumed = lf.update_fits(state.conn, fit_file, workers=3)
+    assert resumed["measured"] == n - 2 and resumed["total"] == n
+    state.close()
