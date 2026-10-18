@@ -1,0 +1,41 @@
+# NOTE: Git has no trailing comments - a "# ..." after a pattern becomes part of
+# the pattern. Keep every comment on its own line.
+
+# --- Secrets & personal data (never commit) ---
+# live 4images session written by the dashboard
+cookies.txt
+# your personal first-open message (the public fallback is dedication.example.json)
+rr_archive/web/static/dedication.json
+# dashboard session settings, job logs
+_control/
+# local Claude Code settings
+.claude/
+
+# --- Downloaded / generated media & caches (large, copyrighted, or machine-local) ---
+russian_records_archive/
+patefon_gift/
+demo_archive/
+_recon/
+_superseded/
+_page_cache/
+*.db
+*.db-wal
+*.db-shm
+scraper.log
+worker_tuning*.json
+
+# --- Generated indexes & fonts (rebuilt by the app / tools/build_fonts.py) ---
+rr_archive/web/static/label_fit.json
+rr_archive/web/static/notes_index.json
+rr_archive/web/static/lyrics_index.json
+rr_archive/web/static/lyrics_meta.json
+rr_archive/web/static/fonts/
+# byproduct of build_fonts.py; the same data is already inlined in static_catalog.html
+rr_archive/web/static/fonts_embedded.css
+rr_archive/web/static/_backup_before_ussr/
+
+# --- Python ---
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/

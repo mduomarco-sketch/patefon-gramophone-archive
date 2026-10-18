@@ -1,0 +1,20 @@
+# Runtime + test dependencies for the Patefon archiver and UI.
+# Install:  python -m venv .venv && .venv/Scripts/pip install -r requirements.txt
+beautifulsoup4==4.15.0
+lxml==6.1.3
+requests==2.34.2
+lingua-language-detector==2.2.0
+mutagen==1.48.1
+
+# Dashboard (local FastAPI app, bound to 127.0.0.1)
+fastapi==0.143.3
+uvicorn==0.54.0
+
+# Spindle-centre detection (labelfit) and gift compaction (gift_builder)
+numpy==2.5.4
+Pillow==13.0.0
+imageio-ffmpeg==0.6.0
+
+# Test-only: httpx backs fastapi.testclient.TestClient; pytest runs the suite.
+httpx==0.28.1
+pytest==9.1.1

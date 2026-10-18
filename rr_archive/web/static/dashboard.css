@@ -1,0 +1,85 @@
+/* Crawler & admin drawer - dashboard only (never part of the gift export). */
+.adm .pf-drawer-body { display: flex; flex-direction: column; gap: 16px; }
+.adm.pf-drawer { z-index: 85; }
+#admin-scrim { z-index: 84; }
+.adm-card { border: 1px solid var(--hairline); border-radius: var(--r-lg); background: rgba(11, 9, 8, 0.5); padding: 16px 18px; }
+.adm-card h3 { margin: 0 0 12px; font: 600 var(--step-2)/1.2 var(--font-display); }
+.adm .hint { color: var(--text-2); font-size: 13px; }
+.adm code { font-family: var(--font-mono); font-size: 0.9em; color: var(--gold); }
+.adm-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.adm-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; align-items: center; }
+.adm-actions small { color: var(--text-3); margin-left: 4px; font-weight: 500; }
+.adm .pf-btn { height: 38px; padding: 0 16px; }
+.adm .pf-btn.danger { border-color: rgba(184, 74, 57, 0.5); color: #F0A496; }
+.adm-chk { display: flex; gap: 8px; align-items: center; color: var(--text-2); margin-bottom: 10px; flex-wrap: wrap; }
+.adm-chk input[type="checkbox"] { accent-color: var(--gold); width: 16px; height: 16px; }
+.adm-num { width: 110px; height: 34px; }
+.adm-slider { width: 180px; accent-color: var(--red); }
+#workers-out { min-width: 2ch; color: var(--brass); font-weight: 600; }
+.adm-queue { border: 1px solid var(--hairline); border-radius: var(--r-md); padding: 10px 12px 2px; margin: 0 0 10px; }
+.adm-queue legend { color: var(--text-3); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; padding: 0 4px; }
+.adm-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.adm-form label { display: grid; gap: 4px; color: var(--text-3); font-size: 12px; }
+.adm-form .wide { grid-column: 1 / -1; }
+.adm-stats { display: flex; flex-wrap: wrap; gap: 8px; }
+.adm-stat { background: var(--surface-2); border: 1px solid var(--hairline); border-radius: var(--r-md); padding: 8px 12px; min-width: 96px; }
+.adm-stat b { display: block; font: 600 18px var(--font-mono); color: var(--text); }
+.adm-stat span { color: var(--text-3); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+.adm-log {
+  background: #070605; border: 1px solid var(--hairline); border-radius: var(--r-md); padding: 10px 12px; margin: 12px 0 0;
+  font: 11.5px/1.5 var(--font-mono); color: var(--text-2); max-height: 260px; overflow: auto; white-space: pre-wrap;
+}
+.adm-pill { font: 600 11px var(--font-mono); padding: 3px 10px; border-radius: var(--r-pill); border: 1px solid var(--hairline); color: var(--text-2); }
+.adm-pill.running { color: var(--gold); border-color: rgba(212, 168, 83, 0.5); }
+.adm-pill.paused, .adm-pill.stopping { color: #E8B04A; border-color: rgba(232, 176, 74, 0.5); }
+.adm-pill.captcha, .adm-pill.session_error, .adm-pill.failed { color: #F0A496; border-color: rgba(184, 74, 57, 0.6); }
+.adm-banner {
+  border: 1px solid rgba(184, 74, 57, 0.6); background: rgba(184, 74, 57, 0.14); color: #F7D6CF;
+  border-radius: var(--r-lg); padding: 14px 16px;
+}
+.adm-banner .pf-input { flex: 1; min-width: 200px; }
+
+/* gear + live dot in the top bar */
+.adm-gear { position: relative; }
+.adm-gear .dot {
+  position: absolute; top: 5px; right: 5px; width: 8px; height: 8px; border-radius: 50%; display: none;
+  box-shadow: 0 0 0 2px var(--canvas);
+}
+.adm-gear.busy .dot { display: block; background: #E8B04A; animation: adm-pulse 1.6s ease-in-out infinite; }
+.adm-gear.alert .dot { display: block; background: var(--carmine-bright); animation: adm-pulse 0.9s ease-in-out infinite; }
+@keyframes adm-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.8); } }
+.adm-new {
+  display: none; height: 32px; padding: 0 12px; border-radius: var(--r-pill); border: 1px solid var(--hairline-strong);
+  background: var(--gold-wash); color: var(--gold); font: 600 12px var(--font-ui);
+}
+.adm-new.show { display: inline-flex; align-items: center; gap: 6px; }
+
+/* recon + run results */
+.recon-page { border: 1px solid var(--hairline); border-radius: var(--r-md); padding: 12px; margin-bottom: 12px; background: var(--surface); }
+.recon-page h4 { margin: 0 0 8px; font: 500 12px var(--font-mono); color: var(--text-2); overflow-wrap: anywhere; }
+.checks { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.check { font: 500 11px var(--font-mono); padding: 2px 8px; border-radius: var(--r-pill); border: 1px solid; }
+.check.ok { color: #9FD8B0; border-color: rgba(76, 195, 138, 0.35); }
+.check.bad { color: #F0A496; border-color: rgba(184, 74, 57, 0.5); }
+.kv { width: 100%; border-collapse: collapse; font-size: 12.5px; table-layout: fixed; }
+.kv td { padding: 4px 8px; border-top: 1px solid var(--hairline); vertical-align: top; overflow-wrap: anywhere; color: var(--text-2); }
+.kv td:first-child { color: var(--text-3); width: 170px; }
+.results { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.results th, .results td { text-align: left; padding: 6px 8px; border-top: 1px solid var(--hairline); vertical-align: top; }
+.results th { color: var(--text-3); font-weight: 500; }
+.adm .ok { color: #9FD8B0; } .adm .bad { color: #F0A496; }
+.adm-path { font: 11px var(--font-mono); color: var(--text-3); overflow-wrap: anywhere; }
+.recl-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
+.recl-grid label { display: grid; gap: 4px; color: var(--text-3); font-size: 12px; }
+.recl-msg { grid-column: 1 / -1; font-size: 13px; }
+
+@media (max-width: 700px) {
+  .adm-form, .recl-grid { grid-template-columns: 1fr; }
+}
+
+/* live speedometer */
+.adm-speedo { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.adm-speed { background: var(--surface-2); border: 1px solid rgba(229, 184, 76, 0.22); border-radius: var(--r-md); padding: 8px 10px; text-align: center; }
+.adm-speed b { display: block; font: 700 20px var(--font-mono); color: var(--brass); font-variant-numeric: tabular-nums; }
+.adm-speed span { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+@media (max-width: 700px) { .adm-speedo { grid-template-columns: repeat(2, 1fr); } }

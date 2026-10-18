@@ -1,0 +1,4 @@
+{
+  "_help": "Copy this file to dedication.json and change 'text' to your own message. The one line here is shown when the app is first opened. dedication.json is git-ignored so your personal message never ends up in the repo; this example is the public fallback.",
+  "text": "A gift of old records"
+}

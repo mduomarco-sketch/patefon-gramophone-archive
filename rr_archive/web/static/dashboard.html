@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0B0908">
+<title>Patefon</title>
+<link rel="stylesheet" href="/static/fonts/fonts.css?v=4">
+<link rel="stylesheet" href="/static/catalog.css?v=4">
+<link rel="stylesheet" href="/static/dashboard.css?v=4">
+</head>
+<body>
+<div id="patefon"></div>
+
+<!-- Crawler & admin: hidden until the gear (top right) or Ctrl+Shift+A. -->
+<div class="pf-scrim" id="admin-scrim"></div>
+<aside class="pf-drawer wide adm" id="admin-drawer" aria-label="Crawler and admin" aria-hidden="true">
+  <div class="pf-drawer-head">
+    <h2>Crawler &amp; admin</h2>
+    <span id="job-pill" class="adm-pill"></span>
+    <button class="pf-icon-btn" id="admin-close" aria-label="Close">✕</button>
+  </div>
+  <div class="pf-drawer-body">
+
+    <div id="captcha-banner" class="adm-banner" hidden>
+      <div><strong>The session expired.</strong> The site redirected to its verification page, so the crawl stopped
+        and nothing was bypassed. Solve the code at
+        <a href="https://www.russian-records.com/" target="_blank" rel="noopener">russian-records.com</a>,
+        then paste the new <code>sessionid</code>.</div>
+      <div class="adm-row">
+        <input id="banner-sid" class="pf-input" placeholder="new sessionid value" autocomplete="off" spellcheck="false">
+        <button class="pf-btn primary" id="banner-save">Save &amp; restart</button>
+      </div>
+    </div>
+
+    <section class="adm-card">
+      <h3>Live status</h3>
+      <div id="speedo" class="adm-speedo" hidden>
+        <div class="adm-speed"><b id="sp-tracks">—</b><span>tracks/min</span></div>
+        <div class="adm-speed"><b id="sp-pages">—</b><span>pages/min</span></div>
+        <div class="adm-speed"><b id="sp-mbps">—</b><span>MB/s</span></div>
+        <div class="adm-speed"><b id="sp-eta">—</b><span>ETA (audio)</span></div>
+      </div>
+      <div id="stats" class="adm-stats"></div>
+      <div class="adm-row">
+        <button class="pf-btn" id="btn-refresh-library">Refresh library</button>
+        <span class="hint" id="refresh-status">New downloads join the music library without interrupting playback.</span>
+      </div>
+      <pre id="log" class="adm-log"></pre>
+    </section>
+
+    <section class="adm-card">
+      <h3>Run</h3>
+      <div class="adm-actions">
+        <button class="pf-btn" id="btn-recon" data-mode="recon">Run recon <small>3–5 requests</small></button>
+        <button class="pf-btn" id="btn-test" data-mode="test">Run 5-item test</button>
+        <button class="pf-btn primary" id="btn-crawl" data-mode="crawl">Start full crawl</button>
+      </div>
+      <div class="adm-actions">
+        <button class="pf-btn" id="btn-pause" data-act="pause">Pause</button>
+        <button class="pf-btn" id="btn-resume" data-act="resume">Resume</button>
+        <button class="pf-btn" id="btn-stop" data-act="stop">Stop after current item</button>
+        <button class="pf-btn danger" id="btn-kill" data-act="kill">Force kill</button>
+      </div>
+      <fieldset class="adm-queue">
+        <legend>Full-crawl queue</legend>
+        <label class="adm-chk" title="Items whose listing row has a play button are visited and downloaded before label scans, books and periodicals.">
+          <input type="checkbox" id="audio-priority" checked> Audio priority (recommended)</label>
+        <label class="adm-chk" title="Never visit or download items without audio. They stay PENDING, so you can fetch them later by unticking this.">
+          <input type="checkbox" id="audio-only"> Audio only: skip items without audio</label>
+        <label class="adm-chk">Stop after
+          <input type="number" id="batch-limit" class="pf-input adm-num" min="0" step="100" value="0" inputmode="numeric"> items
+          <span class="hint">(0 = unlimited)</span></label>
+        <label class="adm-chk" title="Connection health is the only governor: 3 slow responses in a row, a timeout, 429 or 5xx cut the workers by 25% for 15 s, then they ramp back up.">Parallel downloads
+          <input type="range" id="workers" min="1" max="32" step="1" value="1" class="adm-slider">
+          <output id="workers-out" class="mono">1</output>
+          <span class="hint">1 = polite (default) · raise only with the site operator's permission · backs off on its own if the connection strains</span></label>
+      </fieldset>
+      <label class="adm-chk"><input type="checkbox" id="retry-failed"> Retry FAILED items/pages</label>
+      <div class="adm-actions">
+        <button class="pf-btn" id="btn-export">Export gift catalog (index.html)</button>
+        <span id="export-status" class="hint"></span>
+      </div>
+      <div class="adm-actions">
+        <button class="pf-btn" id="btn-build-gift" title="Sync new tracks into Desktop\patefon_gift: a compacted, standalone copy. Reads the archive read-only, 4 workers, runs in the background.">🎁 Update gift folder (Desktop\patefon_gift)</button>
+        <span id="gift-status" class="hint"></span>
+      </div>
+      <p class="hint">Every job runs single-threaded with 2–4 s between requests. Pause and stop take effect between items.</p>
+    </section>
+
+    <section class="adm-card">
+      <h3>Session</h3>
+      <p class="hint">Solve the verification code at russian-records.com, then copy cookies from DevTools → Application →
+        Cookies. The session cookie is <code id="cookie-name">sessionid</code> (the site's PHPSESSID).</p>
+      <form id="session-form" class="adm-form">
+        <label>sessionid <input class="pf-input" name="sessionid" autocomplete="off" spellcheck="false"></label>
+        <label>4images_userid <input class="pf-input" name="userid" autocomplete="off" spellcheck="false" placeholder="-1 when not logged in"></label>
+        <label class="wide">…or the full Cookie header
+          <input class="pf-input" name="cookie_header" autocomplete="off" spellcheck="false" placeholder="sessionid=…; 4images_userid=…"></label>
+        <label class="wide">Browser User-Agent (optional)
+          <input class="pf-input" name="user_agent" autocomplete="off" spellcheck="false"></label>
+        <div class="adm-row wide"><button class="pf-btn primary" type="submit">Save to cookies.txt</button>
+          <span id="session-status" class="hint"></span></div>
+      </form>
+    </section>
+
+    <section class="adm-card">
+      <h3>Re-classify a record</h3>
+      <p class="hint">Open any record's story (click its artwork), then correct its language or category here.
+        Tags are rewritten and the files move to the new folder.</p>
+      <div id="reclassify"></div>
+    </section>
+
+    <section class="adm-card" id="recon-card" hidden>
+      <h3>Recon report: selector matches</h3>
+      <div id="recon"></div>
+    </section>
+
+    <section class="adm-card" id="test-card" hidden>
+      <h3>Items from the last run</h3>
+      <div id="test-results"></div>
+    </section>
+  </div>
+</aside>
+
+<script src="/static/catalog.js?v=4"></script>
+<script src="/static/dashboard.js?v=4"></script>
+</body>
+</html>

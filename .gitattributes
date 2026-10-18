@@ -1,0 +1,5 @@
+# Store text with LF in the repo; check out with the platform's default.
+* text=auto
+# Windows batch files misbehave with LF endings.
+*.bat text eol=crlf
+*.woff2 binary
